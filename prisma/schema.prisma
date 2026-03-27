@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Court {
+  id         Int        @id @default(autoincrement())
+  name       String
+  region     String
+  prefecture String
+  address    String     @default("")
+  properties Property[]
+}
+
+model Property {
+  id               Int      @id @default(autoincrement())
+  courtId          Int
+  court            Court    @relation(fields: [courtId], references: [id])
+  caseNumber       String
+  propertyType     String   // house, apartment, land, other
+  address          String
+  prefecture       String
+  city             String
+  basePrice        Int      // 売却基準価額（円）
+  minimumBidPrice  Int      // 買受可能価額（円）
+  landArea         Float    // 土地面積（平米）
+  buildingArea     Float?   // 建物面積（平米）
+  constructionYear Int?     // 建築年（西暦）
+  structure        String?  // 構造
+  floorPlan        String?  // 間取り
+  floors           Int?     // 階数
+  zoning           String?  // 用途地域
+  bidStartDate     DateTime
+  bidEndDate       DateTime
+  openingDate      DateTime // 開札期日
+  isOwnListing     Boolean  @default(false)
+  status           String   @default("bidding") // bidding, pre_opening, sold, withdrawn
+  images           String   @default("[]") // JSON array of image paths
+  documents        String   @default("[]") // JSON array of document paths
+  latitude         Float?
+  longitude        Float?
+  nearestStation   String?
+  stationDistance   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  saleResult  SaleResult?
+  favorites   Favorite[]
+  exclusions  ExcludedListing[]
+}
+
+model SaleResult {
+  id           Int      @id @default(autoincrement())
+  propertyId   Int      @unique
+  property     Property @relation(fields: [propertyId], references: [id])
+  winningBid   Int
+  bidCount     Int
+  resultDate   DateTime
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime   @default(now())
+  favorites    Favorite[]
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  propertyId Int
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model ExcludedListing {
+  id           Int      @id @default(autoincrement())
+  propertyId   Int
+  property     Property @relation(fields: [propertyId], references: [id])
+  reason       String
+  registeredBy String
+  createdAt    DateTime @default(now())
+}
