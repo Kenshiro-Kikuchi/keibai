@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getPropertyById } from "@/lib/data";
 
 export async function GET(
   request: NextRequest,
@@ -10,13 +10,7 @@ export async function GET(
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }
 
-  const property = await prisma.property.findUnique({
-    where: { id },
-    include: {
-      court: true,
-      saleResult: true,
-    },
-  });
+  const property = getPropertyById(id);
 
   if (!property) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

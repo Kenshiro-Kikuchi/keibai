@@ -1,19 +1,13 @@
-import { prisma } from "@/lib/prisma";
+import { getPropertyById } from "@/lib/data";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatPrice, formatConstructionYear, formatDate, getPropertyTypeLabel, getStatusLabel, getStatusColor, sqmToTsubo } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
-export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
+export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const id = parseInt(params.id);
   if (isNaN(id)) notFound();
 
-  const property = await prisma.property.findUnique({
-    where: { id },
-    include: { court: true, saleResult: true },
-  });
-
+  const property = getPropertyById(id) as any;
   if (!property) notFound();
 
   return (
@@ -59,69 +53,23 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
             <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">物件情報</h2>
             <table className="w-full">
               <tbody className="divide-y">
-                <tr>
-                  <td className="py-3 text-sm text-gray-500 w-32">所在地</td>
-                  <td className="py-3 text-sm font-medium">{property.address}</td>
-                </tr>
-                <tr>
-                  <td className="py-3 text-sm text-gray-500">物件種別</td>
-                  <td className="py-3 text-sm">{getPropertyTypeLabel(property.propertyType)}</td>
-                </tr>
-                {property.landArea > 0 && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">土地面積</td>
-                    <td className="py-3 text-sm">{property.landArea}㎡（{sqmToTsubo(property.landArea)}坪）</td>
-                  </tr>
-                )}
-                {property.buildingArea && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">建物面積</td>
-                    <td className="py-3 text-sm">{property.buildingArea}㎡（{sqmToTsubo(property.buildingArea)}坪）</td>
-                  </tr>
-                )}
-                {property.constructionYear && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">建築年</td>
-                    <td className="py-3 text-sm">{formatConstructionYear(property.constructionYear)}</td>
-                  </tr>
-                )}
-                {property.structure && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">構造</td>
-                    <td className="py-3 text-sm">{property.structure}</td>
-                  </tr>
-                )}
-                {property.floorPlan && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">間取り</td>
-                    <td className="py-3 text-sm">{property.floorPlan}</td>
-                  </tr>
-                )}
-                {property.floors && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">階数</td>
-                    <td className="py-3 text-sm">{property.floors}階</td>
-                  </tr>
-                )}
-                {property.zoning && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">用途地域</td>
-                    <td className="py-3 text-sm">{property.zoning}</td>
-                  </tr>
-                )}
-                {property.nearestStation && (
-                  <tr>
-                    <td className="py-3 text-sm text-gray-500">最寄り駅</td>
-                    <td className="py-3 text-sm">{property.nearestStation} {property.stationDistance}</td>
-                  </tr>
-                )}
+                <tr><td className="py-3 text-sm text-gray-500 w-32">所在地</td><td className="py-3 text-sm font-medium">{property.address}</td></tr>
+                <tr><td className="py-3 text-sm text-gray-500">物件種別</td><td className="py-3 text-sm">{getPropertyTypeLabel(property.propertyType)}</td></tr>
+                {property.landArea > 0 && <tr><td className="py-3 text-sm text-gray-500">土地面積</td><td className="py-3 text-sm">{property.landArea}㎡（{sqmToTsubo(property.landArea)}坪）</td></tr>}
+                {property.buildingArea && <tr><td className="py-3 text-sm text-gray-500">建物面積</td><td className="py-3 text-sm">{property.buildingArea}㎡（{sqmToTsubo(property.buildingArea)}坪）</td></tr>}
+                {property.constructionYear && <tr><td className="py-3 text-sm text-gray-500">建築年</td><td className="py-3 text-sm">{formatConstructionYear(property.constructionYear)}</td></tr>}
+                {property.structure && <tr><td className="py-3 text-sm text-gray-500">構造</td><td className="py-3 text-sm">{property.structure}</td></tr>}
+                {property.floorPlan && <tr><td className="py-3 text-sm text-gray-500">間取り</td><td className="py-3 text-sm">{property.floorPlan}</td></tr>}
+                {property.floors && <tr><td className="py-3 text-sm text-gray-500">階数</td><td className="py-3 text-sm">{property.floors}階</td></tr>}
+                {property.zoning && <tr><td className="py-3 text-sm text-gray-500">用途地域</td><td className="py-3 text-sm">{property.zoning}</td></tr>}
+                {property.nearestStation && <tr><td className="py-3 text-sm text-gray-500">最寄り駅</td><td className="py-3 text-sm">{property.nearestStation} {property.stationDistance}</td></tr>}
               </tbody>
             </table>
           </div>
 
           {/* 3点セット */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">3点セット</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">物件資料</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 { name: "物件明細書", desc: "不動産の表示、権利関係、占有状況" },
@@ -134,9 +82,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
                   </svg>
                   <p className="font-medium text-sm mb-1">{doc.name}</p>
                   <p className="text-xs text-gray-400 mb-2">{doc.desc}</p>
-                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                    PDF準備中
-                  </span>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">PDF準備中</span>
                 </div>
               ))}
             </div>
@@ -145,7 +91,6 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Price */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">価格情報</h2>
             <div className="mb-4">
@@ -161,22 +106,17 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
                 <p className="text-sm text-gray-500">落札価額</p>
                 <p className="text-xl font-bold text-green-600">{formatPrice(property.saleResult.winningBid)}</p>
                 <p className="text-sm text-gray-500 mt-1">入札数: {property.saleResult.bidCount}件</p>
-                <p className="text-sm text-gray-500">
-                  落札倍率: {(property.saleResult.winningBid / property.basePrice).toFixed(2)}倍
-                </p>
+                <p className="text-sm text-gray-500">落札倍率: {(property.saleResult.winningBid / property.basePrice).toFixed(2)}倍</p>
               </div>
             )}
           </div>
 
-          {/* Schedule */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">スケジュール</h2>
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-500">入札期間</p>
-                <p className="text-sm font-medium">
-                  {formatDate(property.bidStartDate)} 〜 {formatDate(property.bidEndDate)}
-                </p>
+                <p className="text-sm font-medium">{formatDate(property.bidStartDate)} 〜 {formatDate(property.bidEndDate)}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">開札期日</p>
@@ -185,7 +125,6 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
             </div>
           </div>
 
-          {/* Court info */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">掲載元情報</h2>
             <p className="text-sm font-medium">{property.court.name}</p>

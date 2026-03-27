@@ -1,18 +1,9 @@
-import { prisma } from "@/lib/prisma";
+import { getSaleResults } from "@/lib/data";
 import Link from "next/link";
 import { formatPrice, formatDate, getPropertyTypeLabel } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
-export default async function ResultsPage() {
-  const results = await prisma.saleResult.findMany({
-    include: {
-      property: {
-        include: { court: true },
-      },
-    },
-    orderBy: { resultDate: "desc" },
-  });
+export default function ResultsPage() {
+  const results = getSaleResults();
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">

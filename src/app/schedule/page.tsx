@@ -1,22 +1,13 @@
-import { prisma } from "@/lib/prisma";
+import { getScheduleProperties } from "@/lib/data";
 import Link from "next/link";
 import { formatDate, getPropertyTypeLabel, formatPrice } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
-
-export default async function SchedulePage() {
-  const properties = await prisma.property.findMany({
-    where: {
-      isOwnListing: false,
-      status: { in: ["bidding", "pre_opening"] },
-    },
-    include: { court: true },
-    orderBy: { openingDate: "asc" },
-  });
+export default function SchedulePage() {
+  const properties = getScheduleProperties();
 
   // Group by opening date
   const grouped = properties.reduce<Record<string, typeof properties>>((acc, prop) => {
-    const dateKey = prop.openingDate.toISOString().split("T")[0];
+    const dateKey = prop.openingDate.split("T")[0];
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(prop);
     return acc;
@@ -37,9 +28,7 @@ export default async function SchedulePage() {
               <div className="bg-blue-50 px-6 py-3 border-b">
                 <h2 className="text-lg font-bold text-blue-900">
                   開札日: {formatDate(dateKey)}
-                  <span className="ml-3 text-sm font-normal text-blue-600">
-                    {props.length}件
-                  </span>
+                  <span className="ml-3 text-sm font-normal text-blue-600">{props.length}件</span>
                 </h2>
               </div>
               <div className="divide-y">

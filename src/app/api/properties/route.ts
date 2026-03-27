@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { properties } from "@/lib/data";
 import { DEFAULT_MIN_LAND_AREA, DEFAULT_MIN_CONSTRUCTION_YEAR, DEFAULT_PER_PAGE } from "@/lib/constants";
 import { REGION_PREFECTURES, type Region } from "@/types";
-import { Prisma } from "@/generated/prisma/client";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -12,104 +11,82 @@ export async function GET(request: NextRequest) {
   const propertyTypes = searchParams.getAll("propertyType");
   const priceMin = searchParams.get("priceMin");
   const priceMax = searchParams.get("priceMax");
-  const landAreaMin = searchParams.get("landAreaMin") || String(DEFAULT_MIN_LAND_AREA);
-  const constructionYearMin = searchParams.get("constructionYearMin") || String(DEFAULT_MIN_CONSTRUCTION_YEAR);
+  const landAreaMin = parseFloat(searchParams.get("landAreaMin") || String(DEFAULT_MIN_LAND_AREA));
+  const constructionYearMin = parseInt(searchParams.get("constructionYearMin") || String(DEFAULT_MIN_CONSTRUCTION_YEAR));
   const floorPlans = searchParams.getAll("floorPlan");
   const status = searchParams.get("status");
   const sort = searchParams.get("sort") || "newest";
   const page = parseInt(searchParams.get("page") || "1");
   const perPage = parseInt(searchParams.get("perPage") || String(DEFAULT_PER_PAGE));
 
-  // Build where clause
-  const where: Prisma.PropertyWhereInput = {
-    isOwnListing: false, // 常に自社物件を除外
-  };
+  let filtered = properties.filter((p) => !p.isOwnListing);
 
-  // Region filter
+  // Region
   if (prefecture) {
-    where.prefecture = prefecture;
+    filtered = filtered.filter((p) => p.prefecture === prefecture);
   } else if (region) {
     const prefectures = REGION_PREFECTURES[region as Region];
     if (prefectures) {
-      where.prefecture = { in: prefectures };
+      filtered = filtered.filter((p) => prefectures.includes(p.prefecture));
     }
   }
 
-  // Property type filter
+  // Property type
   if (propertyTypes.length > 0) {
-    where.propertyType = { in: propertyTypes };
+    filtered = filtered.filter((p) => propertyTypes.includes(p.propertyType));
   }
 
-  // Price filter
-  if (priceMin || priceMax) {
-    where.basePrice = {};
-    if (priceMin) (where.basePrice as Prisma.IntFilter).gte = parseInt(priceMin);
-    if (priceMax) (where.basePrice as Prisma.IntFilter).lte = parseInt(priceMax);
+  // Price
+  if (priceMin) filtered = filtered.filter((p) => p.basePrice >= parseInt(priceMin));
+  if (priceMax) filtered = filtered.filter((p) => p.basePrice <= parseInt(priceMax));
+
+  // Land area (マンションは土地面積0を許容)
+  if (landAreaMin > 0) {
+    filtered = filtered.filter(
+      (p) => p.landArea >= landAreaMin || (p.propertyType === "apartment" && p.landArea === 0)
+    );
   }
 
-  // Land area filter
-  if (landAreaMin && parseInt(landAreaMin) > 0) {
-    where.OR = [
-      { landArea: { gte: parseFloat(landAreaMin) } },
-      { propertyType: "apartment", landArea: 0 }, // マンションは土地面積0を許容
-    ];
-  }
-
-  // Construction year filter
+  // Construction year (土地は建築年なし)
   if (constructionYearMin) {
-    where.AND = [
-      ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
-      {
-        OR: [
-          { constructionYear: { gte: parseInt(constructionYearMin) } },
-          { constructionYear: null }, // 土地は建築年なし
-        ],
-      },
-    ];
+    filtered = filtered.filter(
+      (p) => (p.constructionYear && p.constructionYear >= constructionYearMin) || p.constructionYear === null
+    );
   }
 
-  // Floor plan filter
+  // Floor plan
   if (floorPlans.length > 0) {
-    where.floorPlan = { in: floorPlans };
+    filtered = filtered.filter((p) => p.floorPlan && floorPlans.includes(p.floorPlan));
   }
 
-  // Status filter
+  // Status
   if (status) {
-    where.status = status;
+    filtered = filtered.filter((p) => p.status === status);
   }
 
   // Sort
-  let orderBy: Prisma.PropertyOrderByWithRelationInput;
   switch (sort) {
     case "price_asc":
-      orderBy = { basePrice: "asc" };
+      filtered.sort((a, b) => a.basePrice - b.basePrice);
       break;
     case "price_desc":
-      orderBy = { basePrice: "desc" };
+      filtered.sort((a, b) => b.basePrice - a.basePrice);
       break;
     case "area_desc":
-      orderBy = { landArea: "desc" };
+      filtered.sort((a, b) => b.landArea - a.landArea);
       break;
     case "opening_asc":
-      orderBy = { openingDate: "asc" };
+      filtered.sort((a, b) => a.openingDate.localeCompare(b.openingDate));
       break;
     default:
-      orderBy = { createdAt: "desc" };
+      filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  const [properties, total] = await Promise.all([
-    prisma.property.findMany({
-      where,
-      include: { court: true },
-      orderBy,
-      skip: (page - 1) * perPage,
-      take: perPage,
-    }),
-    prisma.property.count({ where }),
-  ]);
+  const total = filtered.length;
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return NextResponse.json({
-    properties,
+    properties: paginated,
     total,
     page,
     perPage,

@@ -1,21 +1,11 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPropertyCount, getLatestProperties } from "@/lib/data";
 import RegionMap from "@/components/RegionMap";
 import PropertyCard from "@/components/PropertyCard";
 
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  const totalCount = await prisma.property.count({
-    where: { isOwnListing: false, status: { not: "withdrawn" } },
-  });
-
-  const latestProperties = await prisma.property.findMany({
-    where: { isOwnListing: false, status: "bidding" },
-    include: { court: true },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-  });
+export default function HomePage() {
+  const totalCount = getPropertyCount();
+  const latestProperties = getLatestProperties(6);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -69,15 +59,7 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {latestProperties.map((property) => (
-              <PropertyCard
-                key={property.id}
-                property={{
-                  ...property,
-                  bidStartDate: property.bidStartDate.toISOString(),
-                  bidEndDate: property.bidEndDate.toISOString(),
-                  openingDate: property.openingDate.toISOString(),
-                }}
-              />
+              <PropertyCard key={property.id} property={property} />
             ))}
           </div>
         </div>
