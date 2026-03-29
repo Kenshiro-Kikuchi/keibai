@@ -34,20 +34,22 @@ export default function SchedulePage() {
               <div className="divide-y">
                 {props.map((prop) => (
                   <div key={prop.id} className="px-6 py-4 hover:bg-gray-50">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex flex-col gap-2">
                       <div>
-                        <Link href={`/properties/${prop.id}`} className="text-blue-600 hover:text-blue-800 font-medium">
+                        <Link href={`/properties/${prop.id}`} className="text-blue-600 hover:text-blue-800 font-medium text-sm sm:text-base break-all">
                           {prop.address}
                         </Link>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs sm:text-sm text-gray-500">
                           <span>{getPropertyTypeLabel(prop.propertyType)}</span>
                           <span>{prop.court.name}</span>
-                          <span>入札: {formatDate(prop.bidStartDate)} 〜 {formatDate(prop.bidEndDate)}</span>
+                        </div>
+                        <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                          入札: {formatDate(prop.bidStartDate)} 〜 {formatDate(prop.bidEndDate)}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">売却基準価額</p>
-                        <p className="text-lg font-bold text-red-600">{formatPrice(prop.basePrice)}</p>
+                      <div className="sm:text-right">
+                        <span className="text-xs sm:text-sm text-gray-500 mr-2">売却基準価額</span>
+                        <span className="text-base sm:text-lg font-bold text-red-600">{formatPrice(prop.basePrice)}</span>
                       </div>
                     </div>
                   </div>

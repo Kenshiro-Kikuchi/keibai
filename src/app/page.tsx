@@ -10,10 +10,10 @@ export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Hero */}
-      <div className="bg-blue-900 text-white rounded-lg p-8 mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">不動産物件情報</h1>
-        <p className="text-blue-200 mb-4">全国の不動産物件を簡単検索</p>
-        <p className="text-2xl font-bold">
+      <div className="bg-blue-900 text-white rounded-lg p-4 sm:p-8 mb-8 text-center">
+        <h1 className="text-xl sm:text-3xl font-bold mb-2">不動産物件情報</h1>
+        <p className="text-sm sm:text-base text-blue-200 mb-4">全国の不動産物件を簡単検索</p>
+        <p className="text-lg sm:text-2xl font-bold whitespace-nowrap">
           現在 <span className="text-yellow-300">{totalCount}</span> 件の物件を公開中
         </p>
         <Link
