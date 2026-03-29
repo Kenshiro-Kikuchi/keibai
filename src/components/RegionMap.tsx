@@ -20,12 +20,12 @@ export default function RegionMap() {
       <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
         地域から探す
       </h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="flex flex-wrap justify-center gap-3">
         {regions.map((region) => (
           <Link
             key={region}
             href={`/properties?region=${encodeURIComponent(region)}`}
-            className="block bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded-lg p-3 text-center transition-colors whitespace-nowrap"
+            className="flex items-center justify-center bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded-lg p-3 transition-colors whitespace-nowrap w-[calc(33.333%-0.5rem)]"
           >
             <span className="font-medium text-xs sm:text-sm">
               {region}
